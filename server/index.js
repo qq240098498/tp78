@@ -41,13 +41,21 @@ app.delete('/api/languages/:code', (req, res) => {
   }
 });
 
-// 文案列表：按模块与关键词筛选，返回值里带上各模块的条数，页面据此刷新筛选下拉
+// 文案列表：模块、关键词、分组、标签、译文填写状态可叠加筛选，返回值里带上各模块的条数
 app.get('/api/entries', (req, res) => {
-  const result = api.listEntries({
-    module: api.readQuery(req.query, 'module'),
-    keyword: api.readQuery(req.query, 'keyword'),
-  });
-  res.json(result);
+  try {
+    const result = api.listEntries({
+      module: api.readQuery(req.query, 'module'),
+      keyword: api.readQuery(req.query, 'keyword'),
+      group: api.readQuery(req.query, 'group'),
+      tag: api.readQuery(req.query, 'tag'),
+      filled: api.readQuery(req.query, 'filled'),
+      limit: api.readQuery(req.query, 'limit'),
+    });
+    res.json(result);
+  } catch (err) {
+    sendError(res, err);
+  }
 });
 
 app.post('/api/entries', (req, res) => {
@@ -77,6 +85,80 @@ app.patch('/api/entries/:id', (req, res) => {
 app.delete('/api/entries/:id', (req, res) => {
   try {
     res.json(api.deleteEntry(req.params.id));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+// 分组：模块之上的两级组织层，父子关系与兄弟顺序在移动/重排时立即落盘
+app.get('/api/groups', (req, res) => {
+  res.json(api.listGroups({ module: api.readQuery(req.query, 'module') }));
+});
+
+app.post('/api/groups', (req, res) => {
+  try {
+    res.status(201).json(api.createGroup(req.body));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.patch('/api/groups/:id/rename', (req, res) => {
+  try {
+    res.json(api.renameGroup(req.params.id, req.body));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.patch('/api/groups/:id/move', (req, res) => {
+  try {
+    res.json(api.moveGroup(req.params.id, req.body));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.patch('/api/groups/:id/reorder', (req, res) => {
+  try {
+    res.json(api.reorderGroup(req.params.id, req.body));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.delete('/api/groups/:id', (req, res) => {
+  try {
+    res.json(api.deleteGroup(req.params.id));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+// 标签：模块内唯一，改名不影响引用，删除只把标签从文案上摘掉
+app.get('/api/tags', (req, res) => {
+  res.json(api.listTags({ module: api.readQuery(req.query, 'module') }));
+});
+
+app.post('/api/tags', (req, res) => {
+  try {
+    res.status(201).json(api.createTag(req.body));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.patch('/api/tags/:id/rename', (req, res) => {
+  try {
+    res.json(api.renameTag(req.params.id, req.body));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.delete('/api/tags/:id', (req, res) => {
+  try {
+    res.json(api.deleteTag(req.params.id));
   } catch (err) {
     sendError(res, err);
   }

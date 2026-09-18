@@ -1,10 +1,15 @@
 const crypto = require('crypto');
 const { load, save, MAX_TRANSLATION_LENGTH, MAX_NOTE_LENGTH, MAX_OPERATOR_LENGTH, UNNAMED } = require('./store');
 const { ApiError, pickText } = require('./errors');
+const { resolveEntryGroupId } = require('./groups');
+const { resolveEntryTagIds } = require('./tags');
 
 const MODULE_PATTERN = /^[a-z][a-z0-9-]{0,29}$/;
 const KEY_PATTERN = /^[a-z][a-z0-9_-]*(\.[a-z0-9_-]+)+$/;
 const MAX_KEY_LENGTH = 120;
+// 列表接口一次最多返回多少条，防止页面一次拉太多
+const DEFAULT_LIMIT = 200;
+const MAX_LIMIT = 1000;
 
 function validateModule(value) {
   const module = pickText(value);
@@ -90,6 +95,9 @@ function assertKeyFree(data, module, key, selfId) {
   }
 }
 
+// 唯一且确定的先后顺序：先模块、再文案键、最后 id。
+// 不管筛选条件传进来的先后如何，同一份数据排出来的顺序永远一致，
+// 分页截断时既不会重复也不会漏掉
 function sortEntries(list) {
   return list.slice().sort((a, b) => {
     if (a.module !== b.module) return a.module < b.module ? -1 : 1;
@@ -98,29 +106,156 @@ function sortEntries(list) {
   });
 }
 
-// 按模块与关键词筛选：关键词同时匹配文案键与任意一种语言的译文
+// 把可能传成单个字符串或重复参数的值统一收成去重后的数组，并保持首次出现的顺序
+function collectValues(value) {
+  if (value === undefined || value === null) return [];
+  const raw = Array.isArray(value) ? value : [value];
+  const result = [];
+  raw.forEach((item) => {
+    const text = pickText(item);
+    if (text && !result.includes(text)) result.push(text);
+  });
+  return result;
+}
+
+// 译文筛选值形如 zh-CN:filled（已填）或 zh-CN:missing（未填），缺省按“已填”处理
+function parseTranslationFilter(value) {
+  const text = pickText(value);
+  if (!text) return null;
+  const separator = text.lastIndexOf(':');
+  if (separator === -1) return { code: text, expects: 'filled' };
+  const code = text.slice(0, separator);
+  const expects = text.slice(separator + 1) === 'missing' ? 'missing' : 'filled';
+  return code ? { code, expects } : null;
+}
+
+// 收集某分组以及它所有后代分组的 id（分组最多两级，这里仍按任意深度遍历以防数据被手改）
+function collectGroupTreeIds(data, groupId) {
+  const ids = new Set([groupId]);
+  let added = true;
+  while (added) {
+    added = false;
+    data.groups.forEach((group) => {
+      if (group.parentId !== null && ids.has(group.parentId) && !ids.has(group.id)) {
+        ids.add(group.id);
+        added = true;
+      }
+    });
+  }
+  return ids;
+}
+
+// 分页参数：接口传进来是字符串，直接调用动作时也可能是数字，两种都认
+function readNonNegativeInt(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number.parseInt(value.trim(), 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function validatePagination(input) {
+  let limit = DEFAULT_LIMIT;
+  let offset = 0;
+  if (input.limit !== undefined && input.limit !== '') {
+    limit = readNonNegativeInt(input.limit);
+    if (limit === null || limit < 1) {
+      throw new ApiError(400, 'LIMIT_INVALID', '每页条数需要是正整数', 'limit');
+    }
+    limit = Math.min(limit, MAX_LIMIT);
+  }
+  if (input.offset !== undefined && input.offset !== '') {
+    offset = readNonNegativeInt(input.offset);
+    if (offset === null || offset < 0) {
+      throw new ApiError(400, 'OFFSET_INVALID', '偏移量需要是非负整数', 'offset');
+    }
+  }
+  return { limit, offset };
+}
+
+// 按模块、分组、标签、译文填写情况与关键词叠加筛选。大类条件之间一律取交集：
+// - 分组：单选，选中父分组时自动带上它下面全部子分组，__none__ 表示只看未分组
+// - 标签：可多选，选中多个时命中任意一个即可（组内并集），整个标签条件与其它条件取交集
+// - 译文：每种语言可各自要求“已填”或“未填”，列出的语言条件逐条都要满足（组内交集）
+// 同一份数据不管筛选参数传进来的先后如何，结果与顺序都完全一致
 function listEntries(options) {
   const input = options && typeof options === 'object' ? options : {};
   const module = pickText(input.module);
   const keyword = pickText(input.keyword).toLowerCase();
+  const groupFilter = pickText(input.groupId);
+  const tagIds = collectValues(input.tag);
+  const translationFilters = collectValues(input.trans).map(parseTranslationFilter).filter(Boolean);
+  const { limit, offset } = validatePagination(input);
   const data = load();
 
-  let list = data.entries;
-  if (module) list = list.filter((item) => item.module === module);
-  if (keyword) {
-    list = list.filter((item) => {
-      if (item.key.toLowerCase().includes(keyword)) return true;
-      return Object.keys(item.translations).some((code) => item.translations[code].toLowerCase().includes(keyword));
-    });
+  // 分组条件：__none__ 表示只看未分组；具体分组带上它的全部子分组；传了不存在的 id 结果为空
+  let groupIds = null;
+  let ungroupedOnly = false;
+  if (groupFilter === '__none__') {
+    ungroupedOnly = true;
+  } else if (groupFilter) {
+    if (!data.groups.some((item) => item.id === groupFilter)) {
+      groupIds = new Set(); // 选中的分组已被删除：条件什么都匹配不到
+    } else {
+      groupIds = collectGroupTreeIds(data, groupFilter);
+    }
   }
 
+  // 标签条件：命中任意一个选中标签即可；选中的标签已被删除时它的 id 匹配不到任何文案
+  const tagSet = new Set();
+  tagIds.forEach((tagId) => {
+    if (data.tags.some((item) => item.id === tagId)) tagSet.add(tagId);
+  });
+  const tagActive = tagIds.length > 0;
+
+  // 译文条件：逐条语言要求已填或未填，之间取交集；未登记的语言谁都满足不了
+  const knownCodes = new Set(data.languages.map((item) => item.code));
+  const isFilled = (item, code) => {
+    const value = item.translations[code];
+    return typeof value === 'string' && value.trim() !== '';
+  };
+
+  let matched = data.entries.filter((item) => {
+    if (module && item.module !== module) return false;
+    if (ungroupedOnly && item.groupId !== null) return false;
+    if (groupIds && !groupIds.has(item.groupId)) return false;
+    if (tagActive) {
+      if (tagSet.size === 0) return false;
+      if (!item.tags.some((tagId) => tagSet.has(tagId))) return false;
+    }
+    for (const filter of translationFilters) {
+      if (!knownCodes.has(filter.code)) return false;
+      const filled = isFilled(item, filter.code);
+      if (filter.expects === 'filled' && !filled) return false;
+      if (filter.expects === 'missing' && filled) return false;
+    }
+    if (keyword) {
+      if (item.key.toLowerCase().includes(keyword)) return true;
+      return Object.keys(item.translations).some((code) => item.translations[code].toLowerCase().includes(keyword));
+    }
+    return true;
+  });
+
+  matched = sortEntries(matched);
+  const total = matched.length;
+  const page = matched.slice(offset, offset + limit);
+
+  // 模块、分组、标签的可选项始终基于全量数据统计，保证页面下拉不会因为筛选结果为空而消失
   const counts = {};
   data.entries.forEach((item) => {
     counts[item.module] = (counts[item.module] || 0) + 1;
   });
   const modules = Object.keys(counts).sort().map((name) => ({ module: name, count: counts[name] }));
 
-  return { entries: sortEntries(list), modules };
+  return {
+    entries: page,
+    modules,
+    total,
+    limit,
+    offset,
+    hasMore: offset + page.length < total,
+  };
 }
 
 function getEntry(id) {
@@ -137,6 +272,8 @@ function createEntry(payload) {
   const key = validateKey(input.key);
   const translations = validateTranslations(input.translations, data.languages);
   const note = validateNote(input.note);
+  const groupId = resolveEntryGroupId(data, input.groupId);
+  const tagIds = resolveEntryTagIds(data, input.tags, module);
   const operator = validateOperator(input.operator, UNNAMED);
   assertKeyFree(data, module, key, '');
 
@@ -145,6 +282,8 @@ function createEntry(payload) {
     id: crypto.randomUUID(),
     module,
     key,
+    groupId,
+    tags: tagIds,
     translations,
     note,
     updatedBy: operator,
@@ -168,11 +307,15 @@ function updateEntry(id, payload) {
     ? found.translations
     : validateTranslations(input.translations, data.languages);
   const note = input.note === undefined ? found.note : validateNote(input.note);
+  const groupId = input.groupId === undefined ? found.groupId : resolveEntryGroupId(data, input.groupId);
+  const tagIds = input.tags === undefined ? found.tags : resolveEntryTagIds(data, input.tags, module);
   const operator = validateOperator(input.operator, found.updatedBy);
   assertKeyFree(data, module, key, found.id);
 
   found.module = module;
   found.key = key;
+  found.groupId = groupId;
+  found.tags = tagIds;
   found.translations = translations;
   found.note = note;
   found.updatedBy = operator;

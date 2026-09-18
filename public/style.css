@@ -333,6 +333,16 @@ label.invalid input {
   background: #fdf3f3;
 }
 
+input.invalid,
+select.invalid {
+  border-color: var(--danger);
+  background: #fdf3f3;
+}
+
+.tags-row.invalid .tags-editor-title {
+  color: var(--danger);
+}
+
 .entry-form {
   margin-top: 16px;
   padding-top: 14px;
@@ -375,4 +385,251 @@ label.full input {
 .form-actions {
   display: flex;
   gap: 10px;
+}
+
+/* ---- 分组树 ---- */
+.group-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.group-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fcfdff;
+}
+
+.group-row.child {
+  margin-left: 28px;
+  background: #f9fafc;
+}
+
+.group-name {
+  font-weight: 600;
+}
+
+.group-count {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.group-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.group-move {
+  padding: 3px 6px;
+  font-size: 12px;
+}
+
+/* ---- 下拉式多选筛选 ---- */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 200px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(31, 41, 51, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dropdown-panel.wide {
+  min-width: 260px;
+}
+
+.dropdown-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.dropdown-empty {
+  color: var(--ink-soft);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.trans-filter-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink);
+}
+
+.trans-filter-row span {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12.5px;
+}
+
+.tag-module {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-style: normal;
+}
+
+/* ---- 标签管理 ---- */
+.tag-manager {
+  margin: 4px 0 12px;
+  font-size: 13px;
+}
+
+.tag-manager summary {
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+
+.tag-manager-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.tag-add-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.tag-chip-list {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.tag-chip em {
+  font-style: normal;
+  opacity: 0.75;
+}
+
+.tag-chip.static {
+  border-color: transparent;
+  padding: 1px 8px;
+}
+
+.chip-btn {
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.chip-btn.danger {
+  color: var(--danger);
+}
+
+.tag-manager-empty {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+td.tag-cell {
+  white-space: normal;
+  max-width: 180px;
+}
+
+td.group-cell {
+  white-space: normal;
+  max-width: 140px;
+}
+
+/* ---- 文案表单里的标签勾选 ---- */
+.tags-row .tags-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tags-editor-title {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.tag-check-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tag-check-list label.tag-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.tag-quick-add {
+  display: flex;
+  gap: 8px;
+}
+
+.tag-quick-add input {
+  min-width: 220px;
+}
+
+/* ---- 结果计数与分页 ---- */
+.result-tip {
+  margin: 8px 0 4px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.pager #page-info {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.page-size {
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  color: var(--ink-soft);
 }

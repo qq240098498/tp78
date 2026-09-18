@@ -41,13 +41,89 @@ app.delete('/api/languages/:code', (req, res) => {
   }
 });
 
-// 文案列表：按模块与关键词筛选，返回值里带上各模块的条数，页面据此刷新筛选下拉
+// 分组：全局通用的两级树，改名、移动与排序都走 PATCH，改完立刻落盘
+app.get('/api/groups', (_req, res) => {
+  try {
+    res.json(api.listGroups());
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.post('/api/groups', (req, res) => {
+  try {
+    res.status(201).json(api.createGroup(req.body));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.patch('/api/groups/:id', (req, res) => {
+  try {
+    res.json(api.updateGroup(req.params.id, req.body));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.delete('/api/groups/:id', (req, res) => {
+  try {
+    res.json(api.deleteGroup(req.params.id));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+// 标签：模块内唯一，可改名；删除只把标签从文案上摘掉，不删文案
+app.get('/api/tags', (req, res) => {
+  try {
+    res.json(api.listTags({ module: api.readQuery(req.query, 'module') }));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.post('/api/tags', (req, res) => {
+  try {
+    res.status(201).json(api.createTag(req.body));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.patch('/api/tags/:id', (req, res) => {
+  try {
+    res.json(api.updateTag(req.params.id, req.body));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.delete('/api/tags/:id', (req, res) => {
+  try {
+    res.json(api.deleteTag(req.params.id));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+// 文案列表：模块、分组、标签、译文填写情况与关键词叠加筛选，返回值里带上各模块的条数
+// 以及总数与分页信息，页面据此刷新筛选下拉与翻页
 app.get('/api/entries', (req, res) => {
-  const result = api.listEntries({
-    module: api.readQuery(req.query, 'module'),
-    keyword: api.readQuery(req.query, 'keyword'),
-  });
-  res.json(result);
+  try {
+    const result = api.listEntries({
+      module: api.readQuery(req.query, 'module'),
+      groupId: api.readQuery(req.query, 'groupId'),
+      keyword: api.readQuery(req.query, 'keyword'),
+      tag: api.readQueryAll(req.query, 'tag'),
+      trans: api.readQueryAll(req.query, 'trans'),
+      limit: api.readQuery(req.query, 'limit'),
+      offset: api.readQuery(req.query, 'offset'),
+    });
+    res.json(result);
+  } catch (err) {
+    sendError(res, err);
+  }
 });
 
 app.post('/api/entries', (req, res) => {

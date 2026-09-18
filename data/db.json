@@ -29,11 +29,67 @@
       "createdAt": "2026-09-05T01:15:00.000Z"
     }
   ],
+  "groups": [
+    {
+      "id": "group-shopping",
+      "name": "购物链路",
+      "parentId": null,
+      "createdAt": "2026-09-12T01:00:00.000Z"
+    },
+    {
+      "id": "group-shopping-home",
+      "name": "首页与搜索",
+      "parentId": "group-shopping",
+      "createdAt": "2026-09-12T01:02:00.000Z"
+    },
+    {
+      "id": "group-shopping-order",
+      "name": "下单与订单",
+      "parentId": "group-shopping",
+      "createdAt": "2026-09-12T01:04:00.000Z"
+    },
+    {
+      "id": "group-account",
+      "name": "账号",
+      "parentId": null,
+      "createdAt": "2026-09-12T01:06:00.000Z"
+    }
+  ],
+  "tags": [
+    {
+      "id": "tag-home-promo",
+      "name": "促销",
+      "module": "home",
+      "createdAt": "2026-09-12T02:00:00.000Z"
+    },
+    {
+      "id": "tag-home-search",
+      "name": "搜索",
+      "module": "home",
+      "createdAt": "2026-09-12T02:02:00.000Z"
+    },
+    {
+      "id": "tag-order-pay",
+      "name": "支付",
+      "module": "order",
+      "createdAt": "2026-09-12T02:04:00.000Z"
+    },
+    {
+      "id": "tag-common-button",
+      "name": "按钮",
+      "module": "common",
+      "createdAt": "2026-09-12T02:06:00.000Z"
+    }
+  ],
   "entries": [
     {
       "id": "entry-1001",
       "module": "home",
       "key": "home.banner.title",
+      "groupId": "group-shopping-home",
+      "tags": [
+        "tag-home-promo"
+      ],
       "translations": {
         "zh-CN": "限时折扣，精选好物直降",
         "zh-TW": "限時折扣，精選好物直降",
@@ -48,6 +104,10 @@
       "id": "entry-1002",
       "module": "home",
       "key": "home.banner.subtitle",
+      "groupId": "group-shopping-home",
+      "tags": [
+        "tag-home-promo"
+      ],
       "translations": {
         "zh-CN": "单笔满{amount}元包邮",
         "en-US": "Free shipping on orders over {amount}"
@@ -61,6 +121,10 @@
       "id": "entry-1003",
       "module": "home",
       "key": "home.search.placeholder",
+      "groupId": "group-shopping-home",
+      "tags": [
+        "tag-home-search"
+      ],
       "translations": {
         "zh-CN": "搜索商品或品牌",
         "zh-TW": "搜尋商品或品牌",
@@ -76,6 +140,10 @@
       "id": "entry-1004",
       "module": "home",
       "key": "home.empty.tip",
+      "groupId": "group-shopping-home",
+      "tags": [
+        "tag-home-search"
+      ],
       "translations": {
         "zh-CN": "换个关键词再试试",
         "en-US": "Try another keyword"
@@ -89,6 +157,8 @@
       "id": "entry-1005",
       "module": "order",
       "key": "order.confirm.title",
+      "groupId": "group-shopping-order",
+      "tags": [],
       "translations": {
         "zh-CN": "确认订单",
         "zh-TW": "確認訂單",
@@ -103,6 +173,8 @@
       "id": "entry-1006",
       "module": "order",
       "key": "order.confirm.itemCount",
+      "groupId": "group-shopping-order",
+      "tags": [],
       "translations": {
         "zh-CN": "共{count}件商品",
         "zh-TW": "共{count}件商品",
@@ -117,6 +189,10 @@
       "id": "entry-1007",
       "module": "order",
       "key": "order.detail.payTip",
+      "groupId": "group-shopping-order",
+      "tags": [
+        "tag-order-pay"
+      ],
       "translations": {
         "zh-CN": "请在{minutes}分钟内完成支付",
         "zh-TW": "請在{minutes}分鐘內完成支付",
@@ -131,6 +207,10 @@
       "id": "entry-1008",
       "module": "order",
       "key": "order.status.pending",
+      "groupId": "group-shopping-order",
+      "tags": [
+        "tag-order-pay"
+      ],
       "translations": {
         "zh-CN": "待付款",
         "zh-TW": "待付款",
@@ -145,6 +225,8 @@
       "id": "entry-1009",
       "module": "account",
       "key": "account.login.title",
+      "groupId": "group-account",
+      "tags": [],
       "translations": {
         "zh-CN": "登录账号",
         "zh-TW": "登入帳號",
@@ -159,6 +241,8 @@
       "id": "entry-1010",
       "module": "account",
       "key": "account.login.placeholder",
+      "groupId": "group-account",
+      "tags": [],
       "translations": {
         "zh-CN": "手机号或邮箱",
         "en-US": "Phone number or email"
@@ -172,6 +256,8 @@
       "id": "entry-1011",
       "module": "account",
       "key": "account.register.agree",
+      "groupId": "group-account",
+      "tags": [],
       "translations": {
         "zh-CN": "我已阅读并同意{link}",
         "en-US": ""
@@ -185,6 +271,10 @@
       "id": "entry-1012",
       "module": "common",
       "key": "common.action.confirm",
+      "groupId": null,
+      "tags": [
+        "tag-common-button"
+      ],
       "translations": {
         "zh-CN": "确定",
         "zh-TW": "確定",
@@ -199,6 +289,10 @@
       "id": "entry-1013",
       "module": "common",
       "key": "common.action.cancel",
+      "groupId": null,
+      "tags": [
+        "tag-common-button"
+      ],
       "translations": {
         "zh-CN": "取消",
         "zh-TW": "取消",
@@ -213,6 +307,8 @@
       "id": "entry-1014",
       "module": "common",
       "key": "common.error.network",
+      "groupId": null,
+      "tags": [],
       "translations": {
         "zh-CN": "网络开小差了，请稍后重试",
         "zh-TW": "網絡開小差了，請稍後重試",
@@ -227,6 +323,8 @@
       "id": "entry-1015",
       "module": "common",
       "key": "common.loading.text",
+      "groupId": null,
+      "tags": [],
       "translations": {
         "zh-CN": "正在加载",
         "zh-TW": "正在載入",

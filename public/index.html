@@ -10,7 +10,7 @@
   <header class="topbar">
     <div>
       <h1>多语言文案管理平台</h1>
-      <p class="subtitle">登记要支持的语言，按模块维护文案，逐条填上各个语言的译文</p>
+      <p class="subtitle">登记要支持的语言，用分组与标签把文案组织起来，逐条填上各个语言的译文</p>
     </div>
     <div class="topbar-right">
       <label class="operator" data-field="operator">当前操作者
@@ -57,16 +57,53 @@
 
     <section class="panel">
       <div class="panel-head">
+        <h2>分组</h2>
+        <div class="panel-tip">分组在模块之外全局通用，最多两级：一级分组下面可以挂子分组，子分组不能再往下挂</div>
+      </div>
+      <div class="group-tree" id="group-tree"></div>
+      <p class="empty-tip hidden" id="group-empty">还没有任何分组，文案暂时都是“未分组”</p>
+      <form class="inline-form" id="group-form" autocomplete="off">
+        <h3>新增一级分组</h3>
+        <label data-field="groupName">分组名<input id="group-name" placeholder="例如 购物链路" maxlength="40"></label>
+        <button type="submit">新增分组</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
         <h2>文案</h2>
         <div class="filters">
           <select id="filter-module"><option value="">全部模块</option></select>
+          <select id="filter-group"><option value="">全部分组</option></select>
           <input id="filter-keyword" placeholder="搜索文案键或译文" maxlength="60">
+          <div class="dropdown" id="filter-tag-box">
+            <button type="button" class="ghost" id="filter-tag-toggle">标签 ▾</button>
+            <div class="dropdown-panel hidden" id="filter-tag-panel"></div>
+          </div>
+          <div class="dropdown" id="filter-trans-box">
+            <button type="button" class="ghost" id="filter-trans-toggle">译文填写 ▾</button>
+            <div class="dropdown-panel wide hidden" id="filter-trans-panel"></div>
+          </div>
           <button type="button" id="filter-apply">筛选</button>
           <button type="button" id="filter-reset" class="ghost">重置</button>
           <button type="button" id="entry-refresh" class="ghost">刷新</button>
           <button type="button" id="entry-new">新建文案</button>
         </div>
       </div>
+
+      <details class="tag-manager" id="tag-manager">
+        <summary>标签管理（标签按模块维护，模块内不能重名）</summary>
+        <div class="tag-manager-body">
+          <select id="tag-module"></select>
+          <form class="tag-add-form" id="tag-form" autocomplete="off">
+            <label data-field="tagName">给这个模块新增标签<input id="tag-name" placeholder="例如 促销" maxlength="24"></label>
+            <button type="submit">新增标签</button>
+          </form>
+          <div class="tag-chip-list" id="tag-chip-list"></div>
+        </div>
+      </details>
+
+      <p class="result-tip" id="result-tip"></p>
       <div class="table-wrap">
         <table class="grid">
           <thead>
@@ -76,12 +113,36 @@
         </table>
       </div>
       <p class="empty-tip hidden" id="entry-empty">当前筛选条件下没有文案</p>
+      <div class="pager hidden" id="pager">
+        <button type="button" class="ghost" id="page-prev">上一页</button>
+        <span id="page-info"></span>
+        <button type="button" class="ghost" id="page-next">下一页</button>
+        <label class="page-size">每页
+          <select id="page-size">
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="200">200</option>
+          </select>
+          条
+        </label>
+      </div>
 
       <form class="entry-form hidden" id="entry-form" autocomplete="off">
         <h3 id="entry-form-title">新建文案</h3>
         <div class="form-row">
           <label data-field="module">模块<input id="entry-module" placeholder="例如 home" maxlength="30"></label>
           <label data-field="key">文案键<input id="entry-key" placeholder="例如 home.banner.title" maxlength="120"></label>
+          <label data-field="groupId">分组<select id="entry-group"></select></label>
+        </div>
+        <div class="form-row tags-row" data-field="tags">
+          <div class="tags-editor">
+            <span class="tags-editor-title">标签（只列出当前模块的标签，可勾选多个）</span>
+            <div class="tag-check-list" id="entry-tag-list"></div>
+            <div class="tag-quick-add">
+              <input id="entry-tag-new" placeholder="给当前模块新建一个标签" maxlength="24">
+              <button type="button" class="ghost" id="entry-tag-add">新建并勾选</button>
+            </div>
+          </div>
         </div>
         <div class="form-row translations" id="entry-translations"></div>
         <label class="full" data-field="note">备注<input id="entry-note" placeholder="这条文案出现的页面位置" maxlength="200"></label>
